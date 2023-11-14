@@ -1,4 +1,5 @@
 const Promise = require('./src/index')
+
 module.exports = {
     resolved: function(value) {
         return Promise.resolve(value);
