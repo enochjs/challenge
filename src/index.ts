@@ -145,6 +145,58 @@ class MyPromise<T=unknown> {
     return nextPromise
   }
 
+  catch(onRejected: OnRejected) {
+    return this.then(undefined, onRejected)
+  }
+
+  finally(f: Function) {
+    return this.then(
+      (value) => MyPromise.resolve(f()).then(() => value),
+      (reason)=> MyPromise.reject(f()).then(() => { throw reason })
+    )
+}
+
+  static all(promises: MyPromise[]) {
+    if (promises.length === 0) {
+      return MyPromise.resolve([]) 
+    }
+    return new MyPromise((resolve, reject) => {
+      let result = [];
+      let count = 0
+      for (let i = 0; i < promises.length; i++) {
+        let promise = promises[i];
+        if (!(promise instanceof MyPromise)) {
+          promise = MyPromise.resolve(promise);
+        }
+        promise.then((res) => {
+          result[i] = res
+          count += 1
+          if (count === result.length) {
+            resolve(result)
+          }
+        }).catch(e => {
+          reject(e)
+        })
+      }
+    })
+  }
+
+  static race(promises: MyPromise[]) {
+    if (promises.length === 0) {
+      return MyPromise.resolve(null) 
+    }
+    return new MyPromise((resolve, reject) => {
+      for (let i = 0; i < promises.length; i++) {
+        const promise = promises[i];
+        if (!(promise instanceof MyPromise)) {
+          resolve(promise)
+        } else {
+          promise.then(resolve, reject);
+        }
+      }
+    })
+  }
+
   static resolve<T>(value: T) {
     return new MyPromise<T>((resolve) => resolve(value))
   }
