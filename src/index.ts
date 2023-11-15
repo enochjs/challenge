@@ -13,16 +13,17 @@ const isFunction = (value: any) => typeof value === 'function'
 const curry = (fn: Function, arg1: any) => (arg2: any) => fn(arg1, arg2)
 
 const getThen = (value: any): Function | null => {
-  if (typeof value === 'object' || typeof value === 'function') {
-    if (typeof value.then === 'function') {
-      return value.then
+  if (value && (typeof value === 'object' || typeof value === 'function')) {
+    // 2.3.3.1 Let then be x.then
+    const then = value.then
+    if (typeof then === 'function') {
+      return then
     }
   }
   return null
 }
 
 function doResolve(fn: Executor, onFulfilled: OnFulfilled, onRejected: OnRejected) {
-  // 只能转为一种状态
   let done = false
   try {
     fn((result) => {
@@ -99,17 +100,18 @@ class MyPromise<T=unknown> {
     this.state = 'pending'
     this.value = null
     this.handlers = []
-    doResolve(handler, curry(resolve, this), curry(resolve, this))
+    doResolve(handler, curry(resolve, this), curry(reject, this))
   }
 
   then(onFulfilled?: Function, onRejected?: Function) {
+    const self = this
     const nextPromise = new MyPromise((resolve, reject) => {
       const _onFulfilled = (result: T) => {
         if (isFunction(onFulfilled)) {
           try {
             const res = onFulfilled(result)
             if (res === nextPromise) {
-              throw new Error('cannot return same promise')
+              return reject(new TypeError('The `promise` and `x` refer to the same object.'));
             }
             resolve(res)
           } catch (error) {
@@ -125,7 +127,7 @@ class MyPromise<T=unknown> {
           try {
             const res = onRejected(reason)
             if (res === nextPromise) {
-              throw new Error('cannot return same promise')
+              return reject(new TypeError('The `promise` and `x` refer to the same object.'));
             }
             resolve(res)
           } catch (error) {
@@ -134,10 +136,8 @@ class MyPromise<T=unknown> {
         } else {
           reject(reason)
         }
-        
       }
-      // 构造execute
-      setTimeout(() => handle(this, {
+      setTimeout(() => handle(self, {
         onFulfilled: _onFulfilled,
         onRejected: _onRejected,
       }), 0)
@@ -168,5 +168,3 @@ class MyPromise<T=unknown> {
 }
 
 export default MyPromise
-
-
