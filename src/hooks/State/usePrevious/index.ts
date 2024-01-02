@@ -7,17 +7,14 @@ function defaultShouldUpdate<T>(pre: T, next: T) {
 }
 
 function usePrevious<T>(value: T, shouldUpdate: ShouldUpdateFunc<T> = defaultShouldUpdate): T | undefined {
-
-  const preRef = useRef<T>()
+  const prevRef = useRef<T>()
   const curRef = useRef<T>()
 
   if (shouldUpdate(curRef.current, value)) {
-    preRef.current = curRef.current
+    prevRef.current = curRef.current
     curRef.current = value
   }
 
-  return preRef.current
-
+  return prevRef.current
 }
-
 export default usePrevious
