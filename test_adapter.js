@@ -1,4 +1,4 @@
-const Promise = require('./dist/index').default
+const Promise = require('./src/index.js')
 module.exports = {
     resolved: function(value) {
         return Promise.resolve(value);
